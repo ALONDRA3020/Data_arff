@@ -1,37 +1,72 @@
-# views.py
-from django.shortcuts import render
+import io
+import base64
 import pandas as pd
+import matplotlib.pyplot as plt
+from django.shortcuts import render
+from sklearn.model_selection import train_test_split
+import arff   # liac-arff
 
-def dataset_upload_view(request):
-    df_html = None
-    error = None
 
-    if request.method == 'POST':
-        url = request.POST.get('url')
+def fig_to_base64():
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('utf-8')
 
-        # Si es GitHub, convertir a RAW
-        if 'github.com' in url:
-            url = url.replace('github.com', 'raw.githubusercontent.com')\
-                     .replace('/blob/', '/')
 
-        try:
-            # Leer CSV y manejar posibles líneas problemáticas
-            df = pd.read_csv(url, on_bad_lines='skip')
+def load_kdd_dataset_from_fileobj(file_obj):
+    raw = file_obj.read()
+    text = raw.decode('utf-8', errors='ignore')
 
-            # Si no existe columna 'id', agregarla al inicio
-            if 'id' not in df.columns:
-                df.insert(0, 'id', range(len(df)))
+    parsed = arff.loads(text)
+    attributes = [a[0] for a in parsed['attributes']]
+    data = parsed['data']
 
-            # Reordenar para que 'id' esté al inicio (por si acaso)
-            cols = df.columns.tolist()
-            if cols[0] != 'id':
-                cols.remove('id')
-                cols = ['id'] + cols
-                df = df[cols]
+    df = pd.DataFrame(data, columns=attributes)
+    return df
 
-            # Mostrar solo las primeras 20 filas
-            df_html = df.head(20).to_html(classes='table table-striped', index=False)
-        except Exception as e:
-            error = f"Error al cargar los datos: {e}"
 
-    return render(request, 'index.html', {'df_html': df_html, 'error': error})
+def upload_file(request):
+    graphs = []
+    graph_titles = []
+    columns = []
+    rows = 0
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        uploaded = request.FILES['file']
+        df = load_kdd_dataset_from_fileobj(uploaded)
+
+        columns = df.columns.tolist()
+        rows = len(df)
+
+        # dividir el dataset
+        train_set, temp_set = train_test_split(df, test_size=0.4, random_state=42)
+        val_set, test_set = train_test_split(temp_set, test_size=0.5, random_state=42)
+
+        col = "protocol_type"
+        if col in df.columns:
+            for dataset, name in [
+                (df, "df"),
+                (train_set, "train_set"),
+                (val_set, "val_set"),
+                (test_set, "test_set")
+            ]:
+                try:
+                    plt.figure(figsize=(6, 4))
+                    dataset[col].value_counts().plot(kind='bar')
+                    plt.title(f"Distribución de {col} en {name}")
+                    graphs.append(fig_to_base64())
+                    graph_titles.append(f"Distribución de {col} ({name})")
+
+                except Exception:
+                    graphs.append(None)
+                    graph_titles.append(f"Distribución de {col} ({name})")
+
+    context = {
+        "graphs": zip(graphs, graph_titles),
+        "columns": columns,
+        "rows": rows,
+    }
+    return render(request, "upload.html", context)
