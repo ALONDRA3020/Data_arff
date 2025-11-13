@@ -1,269 +1,132 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Panel NSL-KDD | DataWeb</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Subir dataset KDD - Visualización</title>
 
+  <!-- Estilos simples y responsivos -->
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --bg:#f7f8fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#2563eb;
+      --shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{ background:var(--bg); margin:0; padding:32px; color:#111827; }
+    .container{ max-width:1100px; margin:0 auto; }
+    header{ margin-bottom:20px; }
+    h1{ margin:0 0 6px; font-size:20px; }
+    p.lead{ margin:0; color:var(--muted); font-size:14px; }
 
-    body {
-      font-family: "Inter", sans-serif;
-      display: flex;
-      height: 100vh;
-      color: #eaeaea;
-      background: radial-gradient(circle at top left, #101720, #080b12);
+    .card{ background:var(--card); border-radius:12px; padding:18px; box-shadow:var(--shadow); margin-bottom:16px; }
+    .grid{ display:grid; grid-template-columns: 1fr 360px; gap:16px; }
+    .full{ grid-column: 1 / -1; }
+
+    form{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    input[type="file"]{ padding:6px; }
+    button.primary{
+      background:var(--accent); color:white; border:0; padding:10px 14px; border-radius:8px; cursor:pointer;
+      box-shadow:0 6px 12px rgba(37,99,235,0.12);
+    }
+    .meta{ font-size:14px; color:var(--muted); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+    ul.columns{ list-style:none; padding:0; margin:8px 0 0; display:flex; flex-wrap:wrap; gap:8px; }
+    ul.columns li{ background:#f1f5f9; padding:6px 8px; border-radius:6px; font-size:13px; color:#0f172a; }
+
+    .graphs-grid{ display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:12px; }
+    .graph-card{ background:#fff; border-radius:10px; padding:10px; text-align:center; box-shadow: 0 4px 10px rgba(2,6,23,0.04); }
+    .graph-card img{ max-width:100%; height:auto; border-radius:6px; display:block; margin:0 auto 8px; }
+    .graph-title{ font-size:13px; color:#111827; margin-bottom:4px; font-weight:600; }
+    .graph-muted{ font-size:12px; color:var(--muted); }
+
+    .placeholder{
+      height:160px; display:flex; align-items:center; justify-content:center; color:var(--muted);
+      border:2px dashed #e6eefc; border-radius:8px; background:linear-gradient(180deg,#ffffff,#fbfdff);
     }
 
-    /* ===== Sidebar ===== */
-    .sidebar {
-      width: 240px;
-      background: #0f172a;
-      display: flex;
-      flex-direction: column;
-      padding: 25px 0;
-      border-right: 1px solid rgba(255,255,255,0.1);
+    @media (max-width:880px){
+      .grid{ grid-template-columns: 1fr; }
     }
-
-    .sidebar h2 {
-      text-align: center;
-      color: #60a5fa;
-      margin-bottom: 30px;
-      font-size: 20px;
-    }
-
-    .nav {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      padding: 0 20px;
-    }
-
-    .nav a {
-      color: #cbd5e1;
-      text-decoration: none;
-      padding: 10px 15px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: 0.3s ease;
-    }
-
-    .nav a:hover {
-      background: rgba(96,165,250,0.15);
-      color: #60a5fa;
-    }
-
-    .sidebar footer {
-      margin-top: auto;
-      text-align: center;
-      font-size: 13px;
-      color: #64748b;
-      padding: 15px 0;
-    }
-
-    /* ===== Main Content ===== */
-    .main {
-      flex: 1;
-      padding: 30px 40px;
-      overflow-y: auto;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-    }
-
-    .header h1 {
-      font-size: 26px;
-      color: #f1f5f9;
-    }
-
-    .upload-form {
-      background: #1e293b;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 15px;
-      padding: 25px;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .upload-form i {
-      font-size: 38px;
-      color: #60a5fa;
-      margin-bottom: 10px;
-    }
-
-    .upload-form input[type="file"] {
-      margin-top: 10px;
-      margin-bottom: 15px;
-      color: #f8fafc;
-    }
-
-    .upload-form button {
-      background: linear-gradient(90deg, #2563eb, #7c3aed);
-      border: none;
-      color: white;
-      padding: 12px 25px;
-      border-radius: 8px;
-      font-size: 15px;
-      cursor: pointer;
-      transition: 0.3s ease;
-    }
-
-    .upload-form button:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-
-    /* ===== Info Cards ===== */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-
-    .card {
-      background: #1e293b;
-      border-radius: 15px;
-      padding: 20px;
-      border-left: 5px solid #60a5fa;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-    }
-
-    .card h3 {
-      color: #60a5fa;
-      margin-bottom: 8px;
-    }
-
-    .card p {
-      color: #cbd5e1;
-      font-size: 15px;
-    }
-
-    /* ===== Graphs ===== */
-    .graphs {
-      margin-top: 30px;
-    }
-
-    .graphs h2 {
-      color: #60a5fa;
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    .graph-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-      gap: 25px;
-    }
-
-    .graph {
-      background: #1e293b;
-      border-radius: 15px;
-      padding: 15px;
-      text-align: center;
-      transition: 0.3s;
-    }
-
-    .graph:hover {
-      transform: translateY(-5px);
-    }
-
-    .graph h4 {
-      color: #93c5fd;
-      margin-bottom: 10px;
-    }
-
-    .graph img {
-      width: 100%;
-      border-radius: 10px;
-    }
-
-    .no-graph {
-      border: 2px dashed #475569;
-      color: #94a3b8;
-      padding: 40px;
-      border-radius: 15px;
-    }
-
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2><i class="fa-solid fa-shield"></i> NSL-KDD</h2>
-    <nav class="nav">
-      <a href="#"><i class="fa-solid fa-upload"></i> Subir archivo</a>
-      <a href="#"><i class="fa-solid fa-chart-line"></i> Análisis</a>
-      <a href="#"><i class="fa-solid fa-gear"></i> Configuración</a>
-    </nav>
-    <footer>© 2025 DataWeb Analytics</footer>
-  </div>
+  <div class="container">
+    <header>
+      <h1>Subir dataset KDD y mostrar gráficas</h1>
+      <p class="lead">Sube un archivo .arff (KDD) y el sistema generará distribuciones por <code>protocol_type</code> para train/val/test y dataset completo.</p>
+    </header>
 
-  <main class="main">
-    <div class="header">
-      <h1>Procesamiento del Dataset NSL-KDD</h1>
-    </div>
-
-    <div class="upload-form">
+    <div class="card">
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <i class="fa-solid fa-cloud-arrow-up"></i>
-        <p>Selecciona un archivo <strong>.ARFF</strong> para procesar:</p>
-        <input type="file" name="file" accept=".arff" required>
-        <br>
-        <button type="submit"><i class="fa-solid fa-play"></i> Procesar</button>
+        <label for="id_file" style="font-weight:600;">Archivo (.arff)</label>
+        <input id="id_file" type="file" name="file" accept=".arff,.txt" required>
+        <button class="primary" type="submit">Subir y procesar</button>
+        <div style="flex:1"></div>
+        <div class="meta">
+          <span>Filas: <strong>{{ rows|default:"—" }}</strong></span>
+          <span>Columnas: <strong>{{ columns|length|default:"—" }}</strong></span>
+        </div>
       </form>
+
+      <!-- Lista de columnas (si existen) -->
+      {% if columns %}
+        <div style="margin-top:12px;">
+          <strong>Columnas:</strong>
+          <ul class="columns">
+            {% for c in columns %}
+              <li>{{ c }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <div style="margin-top:12px; color:var(--muted);">Aún no se ha subido un archivo o no se encontraron columnas.</div>
+      {% endif %}
     </div>
 
-    {% if rows and columns %}
-    <section class="stats">
+    <div class="grid">
       <div class="card">
-        <h3>📊 Columnas</h3>
-        <p>{{ columns|length }}</p>
-      </div>
-      <div class="card">
-        <h3>🧾 Registros</h3>
-        <p>{{ rows }}</p>
-      </div>
-      <div class="card">
-        <h3>🧠 Lista de columnas</h3>
-        <p>{{ columns|join:", " }}</p>
-      </div>
-    </section>
-    {% endif %}
+        <h3 style="margin:0 0 8px;">Gráficas generadas</h3>
+        <p class="lead" style="margin-bottom:12px;">Distribución de <code>protocol_type</code> en los distintos subconjuntos (si está presente en el dataset).</p>
 
-    {% if graphs %}
-    <section class="graphs">
-      <h2><i class="fa-solid fa-chart-pie"></i> Gráficas generadas</h2>
-      <div class="graph-grid">
-        {% for g, title in graphs %}
-          {% if g %}
-            <div class="graph">
-              <h4>{{ title }}</h4>
-              <img src="data:image/png;base64,{{ g }}">
-            </div>
-          {% else %}
-            <div class="no-graph">
-              <p>{{ title }}</p>
-              <em>No disponible</em>
-            </div>
-          {% endif %}
-        {% endfor %}
+        {% if graphs %}
+          <div class="graphs-grid">
+            {% for img, title in graphs %}
+              <div class="graph-card">
+                <div class="graph-title">{{ title }}</div>
+                {% if img %}
+                  <img src="data:image/png;base64,{{ img }}" alt="{{ title }}" />
+                  <div class="graph-muted">SVG/PNG embebido</div>
+                {% else %}
+                  <div class="placeholder">No se pudo generar la gráfica</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="placeholder full" style="margin-top:8px;">No hay gráficas para mostrar. Sube un archivo .arff válido.</div>
+        {% endif %}
       </div>
-    </section>
-    {% endif %}
-  </main>
+
+      <div class="card">
+        <h3 style="margin-top:0;">Ayuda rápida</h3>
+        <p class="meta" style="margin-top:6px;">
+          - El view espera que la columna <code>protocol_type</code> exista para generar las gráficas.<br>
+          - Si las gráficas aparecen vacías, revisa que el archivo esté en formato ARFF y que la lectura no falle por codificación.
+        </p>
+
+        <hr style="margin:12px 0;" />
+        <h4 style="margin:0 0 6px;">Sugerencias</h4>
+        <ul style="margin:0; padding-left:18px; color:var(--muted);">
+          <li>Si quieres previsualizar filas, modifica el contexto para enviar un <code>head</code> del dataframe.</li>
+          <li>Para más gráficas (ej. por clase), añade la lógica en tu view y envía imágenes adicionales en el zip <code>graphs</code>.</li>
+        </ul>
+      </div>
+    </div> <!-- /grid -->
+
+  </div> <!-- /container -->
 </body>
 </html>
